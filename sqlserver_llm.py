@@ -18,7 +18,9 @@ key = os.environ.get('GOOGLE_API_KEY')
 def read_as_dataframe(data: None, feature_list: list):
 
     try:
-        return pd.DataFrame(data, columns=feature_list)
+        
+        rows = [list(value) for value in data]
+        return pd.DataFrame(rows, columns=feature_list)
     except Exception as e:
         return e
     
@@ -53,18 +55,18 @@ class ChatGoogleGENAI:
 
 class ConnectionString:
 
-    def __init__(self):
+    def __init__(self,database_name: str, server_name: str):
         self.conn_str = (
                 'DRIVER={SQL Server};' 
-                'SERVER=LAPTOP-B17JMI03\\SQLEXPRESS;'
-                'DATABASE=pizzasales;'
+                f'SERVER={server_name};'
+                f'DATABASE={database_name};'
 
                 )
     
 class MakeConnection(ConnectionString):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self,database: str, database_server: str):
+        super().__init__(database_name=database, server_name=database_server)
 
     def cursor_connection(self):
 
@@ -77,8 +79,8 @@ class MakeConnection(ConnectionString):
 
 class DatabaseOperations(MakeConnection):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self,db_name: str, server: str):
+        super().__init__(database=db_name, database_server=server)
         self.cursor = self.cursor_connection().cursor()
     
 
@@ -179,8 +181,8 @@ class PromptTemplates:
 
 class QueryTable(DatabaseOperations, ChatGoogleGENAI):
 
-    def __init__(self):
-        DatabaseOperations.__init__(self)
+    def __init__(self,database_name: str, select_server: str):
+        DatabaseOperations.__init__(self,db_name=database_name, server=select_server)
         ChatGoogleGENAI.__init__(self)
 
     def get_sql_query(self,table_name: list, user_query: str):
@@ -218,14 +220,14 @@ class QueryTable(DatabaseOperations, ChatGoogleGENAI):
             self.cursor.execute(self.extract_sql_from_response(response))
             columns = [desc[0] for desc in self.cursor.description]
             result = self.cursor.fetchall()
-            final_result = [list(data) for data in result]
-            return final_result, columns
+            
+            return result, columns
         except Exception as e:
             return e
     
         
 if __name__ == "__main__":
-    q = QueryTable()
+    q = QueryTable(database_name='pizzasales', select_server='LAPTOP-B17JMI03\\SQLEXPRESS')
     query, table_columns = q.execuete_query(table=["pizzas","pizza_types",'orders',"order_details"],
                     query="display the categories and the sum of quantity accross all the categories")
 

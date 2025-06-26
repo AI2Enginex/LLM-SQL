@@ -9,7 +9,7 @@ import google.generativeai as genai
 warnings.filterwarnings('ignore')
 
 # Setting the API key for Google Generative AI service by assigning it to the environment variable 'GOOGLE_API_KEY'
-api_key = os.environ['GOOGLE_API_KEY'] = "AIzaSyDaHofSA0rPEv28pznJZ6vhbJh0W9uU4oM"
+api_key = os.environ['GOOGLE_API_KEY'] = "AIzaSyCLPqDNMYnE6GTR6V3X5NbLaQGHpol_d78"
 
 # Configuring Google Generative AI module with the provided API key
 genai.configure(api_key=api_key)
@@ -18,7 +18,9 @@ key = os.environ.get('GOOGLE_API_KEY')
 def read_as_dataframe(data: None, feature_list: list):
 
     try:
-        return pd.DataFrame(data, columns=feature_list)
+        
+        rows = [list(value) for value in data]
+        return pd.DataFrame(rows, columns=feature_list)
     except Exception as e:
         return e
 
@@ -56,10 +58,10 @@ class ChatGoogleGENAI:
 class DatabaseConnect:
     
     # Initialize the class with password and database name
-    def __init__(self, password: str, database: str):
+    def __init__(self, password: str, database: str, server: str):
         self.password = password
         self.database_name = database
-        
+        self.server = server
         # Create SQLAlchemy engine and establish a connection
         self.engine = sqlalchemy.create_engine(
                 f'mysql+pymysql://root:{self.password}@localhost:3306/{self.database_name}')
@@ -68,7 +70,7 @@ class DatabaseConnect:
     def try_connection(self):
         try:
             self.conn = pymysql.connect(
-                host='localhost',
+                host=self.server,
                 user='root',
                 password=self.password,
                 db=self.database_name,
@@ -164,8 +166,8 @@ class PromptTemplates:
 
 class QueryTable(DatabaseConnect, ChatGoogleGENAI):
 
-    def __init__(self, password: str, database: str):
-        DatabaseConnect.__init__(self,password, database)
+    def __init__(self, password: str, database: str, server: str):
+        DatabaseConnect.__init__(self,password, database, server)
         ChatGoogleGENAI.__init__(self)
 
     def get_sql_query(self,table_name: list, user_query: str):
@@ -210,7 +212,7 @@ class QueryTable(DatabaseConnect, ChatGoogleGENAI):
         
 if __name__ == "__main__":
 
-    q = QueryTable(password="vasu",database="employees")
+    q = QueryTable(password="vasu",database="employees",server='localhost')
     query, columns = q.execuete_query(table=["employees","employee_projects","projects"],
                          query="display the entire data from the employees table")
     
