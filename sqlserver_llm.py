@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Setting the API key for Google Generative AI service by assigning it to the environment variable 'GOOGLE_API_KEY'
-api_key = os.environ['GOOGLE_API_KEY'] = "AIzaSyCLPqDNMYnE6GTR6V3X5NbLaQGHpol_d78"
+api_key = os.environ['GOOGLE_API_KEY'] = ""
 
 # Configuring Google Generative AI module with the provided API key
 genai.configure(api_key=api_key)
