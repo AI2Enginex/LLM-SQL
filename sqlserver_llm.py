@@ -53,49 +53,66 @@ class ChatGoogleGENAI:
             candidate_count=1,
             max_output_tokens=3000)
 
+# This class is responsible for forming a basic SQL Server connection string
 class ConnectionString:
 
-    def __init__(self,database_name: str, server_name: str):
+    def __init__(self, database_name: str, server_name: str):
+        # Constructs a connection string for SQL Server using provided database and server names
         self.conn_str = (
-                'DRIVER={SQL Server};' 
-                f'SERVER={server_name};'
-                f'DATABASE={database_name};'
+            'DRIVER={SQL Server};' 
+            f'SERVER={server_name};'
+            f'DATABASE={database_name};'
+        )
 
-                )
-    
+# This subclass creates an actual database connection using the constructed connection string
 class MakeConnection(ConnectionString):
 
-    def __init__(self,database: str, database_server: str):
+    def __init__(self, database: str, database_server: str):
+        # Inherit and initialize the connection string from the base class
         super().__init__(database_name=database, server_name=database_server)
 
     def cursor_connection(self):
-
+        """
+        Establishes a connection to the SQL Server and returns the connection object.
+        Includes exception handling for connection errors.
+        """
         try:
-            connection = pyodbc.connect(self.conn_str,timeout=10)
-            print("success")
+            connection = pyodbc.connect(self.conn_str, timeout=10)
+            print("success")  # Optional: Indicates a successful connection
             return connection
         except Exception as e:
-            return e
+            return e  # Returns the exception if connection fails
 
+# This class extends MakeConnection and performs database operations using a connected cursor
 class DatabaseOperations(MakeConnection):
 
-    def __init__(self,db_name: str, server: str):
+    def __init__(self, db_name: str, server: str):
+        # Initialize the base connection and immediately create a cursor object
         super().__init__(database=db_name, database_server=server)
         self.cursor = self.cursor_connection().cursor()
-    
 
-    def read_from_table(self,table_name: str):
-
+    def read_from_table(self, table_name: str):
+        """
+        Fetches all records from the specified table and returns them as a pandas DataFrame.
+        """
         try:
             sql_query = self.cursor.execute(f"SELECT * FROM {table_name};")
-            # Fetch the data and column names
+
+            # Fetch all rows and construct DataFrame using column names from query metadata
             data = sql_query.fetchall()
-            df = pd.DataFrame([list(data) for data in data], columns=[columns[0] for columns in sql_query.description])
+            df = pd.DataFrame(
+                [list(data) for data in data],
+                columns=[columns[0] for columns in sql_query.description]
+            )
             return df
         except Exception as e:
-            return e
-    
+            return e  # Return any error encountered
+
     def get_table_schema(self, table_name: str):
+        """
+        Retrieves schema details (column names, types, nullability, defaults, primary keys)
+        for a given table using INFORMATION_SCHEMA.
+        """
         try:
             query = f"""
                 SELECT 
@@ -119,6 +136,7 @@ class DatabaseOperations(MakeConnection):
             self.cursor.execute(query)
             rows = self.cursor.fetchall()
 
+            # Build a readable schema output
             schema_lines = [f"Table: {table_name}", "Columns:"]
             for row in rows:
                 col, dtype, nullable, default, is_pk = row
@@ -134,9 +152,12 @@ class DatabaseOperations(MakeConnection):
             return "\n".join(schema_lines)
 
         except Exception as e:
-            return str(e)
+            return str(e)  # Return the error message as a string
         
     def get_multiple_table_schemas(self, table_names: list):
+        """
+        Fetches schemas for multiple tables and returns them as a combined string.
+        """
         try:
             all_schemas = []
             for table in table_names:
@@ -144,7 +165,7 @@ class DatabaseOperations(MakeConnection):
                 all_schemas.append(schema)
             return "\n\n".join(all_schemas)
         except Exception as e:
-            return e
+            return e  # Return any encountered exception
 
 
 class PromptTemplates:
@@ -179,31 +200,50 @@ class PromptTemplates:
             return e
         
 
+# This class integrates database interaction and LLM-based SQL query generation
 class QueryTable(DatabaseOperations, ChatGoogleGENAI):
 
-    def __init__(self,database_name: str, select_server: str):
-        DatabaseOperations.__init__(self,db_name=database_name, server=select_server)
+    def __init__(self, database_name: str, select_server: str):
+        # Initialize the parent class for database operations
+        DatabaseOperations.__init__(self, db_name=database_name, server=select_server)
+        
+        # Initialize the LLM interface (e.g., Google Gemini via ChatGoogleGENAI)
         ChatGoogleGENAI.__init__(self)
 
-    def get_sql_query(self,table_name: list, user_query: str):
-
+    def get_sql_query(self, table_name: list, user_query: str):
+        """
+        Constructs a prompt using the provided table names and user natural language query.
+        Sends it to the LLM and returns the generated SQL query.
+        """
         try:
+            # Get schema information of the provided tables
             table_schema = self.get_multiple_table_schemas(table_name)
+
+            # Retrieve prompt template and fill it with actual table and query details
             prompt_template = PromptTemplates.query_table()
-            prompt = prompt_template.format(table_name=table_name, schema=table_schema,nl_query=user_query)
+            prompt = prompt_template.format(
+                table_name=table_name,
+                schema=table_schema,
+                nl_query=user_query
+            )
+
+            # Invoke the LLM with the prompt and return the response
             return self.llm.invoke(prompt)
-            
         except Exception as e:
-            return e
-    
-    def extract_sql_from_response(self,response):
+            return e  # Return any encountered exception
+
+    def extract_sql_from_response(self, response):
+        """
+        Extracts raw SQL query string from LLM response. Handles both plain and markdown formatted SQL.
+        """
         try:
+            # If response has `.content` attribute (e.g., from Gemini), use it
             if hasattr(response, "content"):
                 sql = response.content.strip()
             else:
                 sql = str(response).strip()
 
-            # Remove markdown ```sql and ``` blocks if present
+            # Clean markdown formatting like ```sql and ```
             if sql.startswith("```sql"):
                 sql = sql.replace("```sql", "").strip()
             if sql.endswith("```"):
@@ -211,19 +251,33 @@ class QueryTable(DatabaseOperations, ChatGoogleGENAI):
 
             return sql
         except Exception as e:
-            return
+            return  # Silently fail if anything goes wrong (can log this for better debug)
 
-    def execuete_query(self,table: str, query: str):
-
+    def execuete_query(self, table: str, query: str):
+        """
+        Main function to process a user query:
+        - Generates SQL from natural language using LLM
+        - Executes the SQL on the database
+        - Returns result rows and column names
+        """
         try:
+            # Generate SQL query from the user's prompt
             response = self.get_sql_query(table_name=table, user_query=query)
-            self.cursor.execute(self.extract_sql_from_response(response))
+
+            # Extract clean SQL from the LLM response
+            sql_to_run = self.extract_sql_from_response(response)
+
+            # Execute the extracted SQL
+            self.cursor.execute(sql_to_run)
+
+            # Extract column names and result rows
             columns = [desc[0] for desc in self.cursor.description]
             result = self.cursor.fetchall()
-            
+
             return result, columns
         except Exception as e:
-            return e
+            return e  # Return error if execution fails
+
     
         
 if __name__ == "__main__":
