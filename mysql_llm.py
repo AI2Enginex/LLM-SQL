@@ -9,7 +9,7 @@ import google.generativeai as genai
 warnings.filterwarnings('ignore')
 
 # Setting the API key for Google Generative AI service by assigning it to the environment variable 'GOOGLE_API_KEY'
-api_key = os.environ['GOOGLE_API_KEY'] = "AIzaSyCLPqDNMYnE6GTR6V3X5NbLaQGHpol_d78"
+api_key = os.environ['GOOGLE_API_KEY'] = "AIzaSyDaHofSA0rPEv28pznJZ6vhbJh0W9uU4oM"
 
 # Configuring Google Generative AI module with the provided API key
 genai.configure(api_key=api_key)
@@ -28,7 +28,7 @@ class GeminiModel:
     def __init__(self):
 
         # Initializing the GenerativeModel object with the 'gemini-pro' model
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
         # Creating a GenerationConfig object with specific configuration parameters
         self.generation_config = genai.GenerationConfig(
             temperature=0,
@@ -48,7 +48,7 @@ class ChatGoogleGENAI:
     def __init__(self):
         
         # Initializing the ChatGoogleGenerativeAI object with specified parameters
-        self.llm=ChatGoogleGenerativeAI(temperature=0.7,model="gemini-1.5-flash", google_api_key=key,top_p=1.0,
+        self.llm=ChatGoogleGenerativeAI(temperature=0.7,model="gemini-2.5-flash", google_api_key=key,top_p=1.0,
             top_k=32,
             candidate_count=1,
             max_output_tokens=3000)
