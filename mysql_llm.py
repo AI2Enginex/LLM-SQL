@@ -22,7 +22,7 @@ def read_as_dataframe(data: None, feature_list: list):
         rows = [list(value) for value in data]
         return pd.DataFrame(rows, columns=feature_list)
     except Exception as e:
-        return e
+        raise e
 
 class GeminiModel:
     def __init__(self):
@@ -90,7 +90,7 @@ class DatabaseConnect:
             query = f"SELECT * FROM {table_name};"
             return pd.read_sql(query, self.engine)
         except Exception as e:
-            return e
+            raise e
     
     # Method to read a table's schema
     def get_table_schema(self, table_name: str):
@@ -121,7 +121,7 @@ class DatabaseConnect:
 
             return "\n".join(schema_lines)
         except Exception as e:
-            return e
+            raise e
     
 
     # Method to read Schemas for multiple tables
@@ -133,7 +133,7 @@ class DatabaseConnect:
                 all_schemas.append(schema)
             return "\n\n".join(all_schemas)
         except Exception as e:
-            return e
+            raise e
 
 
 class PromptTemplates:
@@ -162,7 +162,7 @@ class PromptTemplates:
                 """
             return PromptTemplate(template=template.strip(), input_variables=["table_name","schema","nl_query"])
         except Exception as e:
-            return e
+            raise e
 
 class QueryTable(DatabaseConnect, ChatGoogleGENAI):
 
@@ -179,7 +179,7 @@ class QueryTable(DatabaseConnect, ChatGoogleGENAI):
             return self.llm.invoke(prompt)
             
         except Exception as e:
-            return e
+            raise e
     
     def extract_sql_from_response(self,response):
         try:
@@ -208,7 +208,7 @@ class QueryTable(DatabaseConnect, ChatGoogleGENAI):
             result = con.fetchall()
             return result, columns
         except Exception as e:
-            return e
+            raise e
         
 if __name__ == "__main__":
 

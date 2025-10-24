@@ -22,7 +22,7 @@ def read_as_dataframe(data: None, feature_list: list):
         rows = [list(value) for value in data]
         return pd.DataFrame(rows, columns=feature_list)
     except Exception as e:
-        return e
+        raise e
     
 class GeminiModel:
     def __init__(self):
@@ -81,7 +81,7 @@ class MakeConnection(ConnectionString):
             print("success")  # Optional: Indicates a successful connection
             return connection
         except Exception as e:
-            return e  # Returns the exception if connection fails
+            raise e  # Returns the exception if connection fails
 
 # This class extends MakeConnection and performs database operations using a connected cursor
 class DatabaseOperations(MakeConnection):
@@ -106,7 +106,7 @@ class DatabaseOperations(MakeConnection):
             )
             return df
         except Exception as e:
-            return e  # Return any error encountered
+            raise e  # Return any error encountered
 
     def get_table_schema(self, table_name: str):
         """
@@ -165,7 +165,7 @@ class DatabaseOperations(MakeConnection):
                 all_schemas.append(schema)
             return "\n\n".join(all_schemas)
         except Exception as e:
-            return e  # Return any encountered exception
+            raise e  # Return any encountered exception
 
 
 class PromptTemplates:
@@ -197,7 +197,7 @@ class PromptTemplates:
                 """
             return PromptTemplate(template=template.strip(), input_variables=["table_name","schema","nl_query"])
         except Exception as e:
-            return e
+            raise e
         
 
 # This class integrates database interaction and LLM-based SQL query generation
@@ -230,7 +230,7 @@ class QueryTable(DatabaseOperations, ChatGoogleGENAI):
             # Invoke the LLM with the prompt and return the response
             return self.llm.invoke(prompt)
         except Exception as e:
-            return e  # Return any encountered exception
+            raise e  # Return any encountered exception
 
     def extract_sql_from_response(self, response):
         """
@@ -276,7 +276,7 @@ class QueryTable(DatabaseOperations, ChatGoogleGENAI):
 
             return result, columns
         except Exception as e:
-            return e  # Return error if execution fails
+            raise e  # raise error if execution fails
 
     
         
