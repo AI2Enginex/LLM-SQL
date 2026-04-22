@@ -1,0 +1,4 @@
+.env
+LLMUtils/__pycache__/
+MYSQL/__pycache__/
+SQLSERVER/__pycache__/
