@@ -7,20 +7,21 @@ import pandas as pd
 class DatabaseConnect:
     
     # Initialize the class with password and database name
-    def __init__(self, password: str, database: str, server: str):
+    def __init__(self, user: str, password: str, database: str, server: str):
         self.password = password
         self.database_name = database
         self.server = server
+        self.user = user
         # Create SQLAlchemy engine and establish a connection
         self.engine = sqlalchemy.create_engine(
-                f'mysql+pymysql://root:{self.password}@localhost:3306/{self.database_name}')
+                f'mysql+pymysql://{self.user}:{self.password}@{self.server}:3306/{self.database_name}')
         
     # Method to try establishing a database connection
     def try_connection(self):
         try:
             self.conn = pymysql.connect(
                 host=self.server,
-                user='root',
+                user=self.user,
                 password=self.password,
                 db=self.database_name,
             )

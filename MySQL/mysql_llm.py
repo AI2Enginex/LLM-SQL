@@ -18,8 +18,8 @@ def read_as_dataframe(data: None, feature_list: list):
 
 class QueryTable(DatabaseConnect, ChatGoogleGENAI):
 
-    def __init__(self, password: str, database: str, server: str):
-        DatabaseConnect.__init__(self,password, database, server)
+    def __init__(self, user: str, password: str, database: str, server: str):
+        DatabaseConnect.__init__(self, user, password, database, server)
         ChatGoogleGENAI.__init__(self)
 
     def get_sql_query(self,table_name: list, user_query: str):
@@ -32,7 +32,7 @@ class QueryTable(DatabaseConnect, ChatGoogleGENAI):
             model_response = self.llm.invoke(prompt)
             
             text_value = model_response.content[0].get('text', '').replace('\n', ' ').strip()
-            
+           
             return text_value
             
         except Exception as e:
@@ -69,7 +69,7 @@ class QueryTable(DatabaseConnect, ChatGoogleGENAI):
         
 if __name__ == "__main__":
 
-    q = QueryTable(password="vasu",database="employees",server='localhost')
+    q = QueryTable(user="root", password="vasu", database="employees", server='localhost')
     query, columns = q.execuete_query(table=["employees","employee_projects","projects"],
                          query="display the names of the employees and projects assigned to them")
     
