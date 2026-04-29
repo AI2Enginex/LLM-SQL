@@ -13,7 +13,7 @@ This project demonstrates how to query relational databases using natural langua
 
 **MySQL databases.**
 
-**MySQL databases.**
+**SQL SERVER databases.**
 
 # Microsoft SQL Server databases.
 
